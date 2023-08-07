@@ -1,37 +1,58 @@
 import { Octokit } from "@octokit/rest";
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useState, useEffect } from "react";
 import { Button, Form, Modal, ModalProps } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import { AppContext } from "../../../../stores";
 import styles from "./ModalEnterToken.module.css";
+import { useSessionStorage } from "../../../../hooks/useSessionStorage";
 
 interface FormVerifyGithubToken {
   token: string;
 }
 
-export const ModalEnterToken = ({show, onHide, ...props}: ModalProps) => {
+export const ModalEnterToken = ({ ...props }: ModalProps) => {
+  const [show, setShow] = useState<boolean>(false);
   const { setOctokit } = useContext(AppContext);
+  const { value, setValue, getValue } = useSessionStorage("token", "");
   const { getValues, register } = useForm<FormVerifyGithubToken>({
     defaultValues: {
-      token: "",
+      token: value,
     },
   });
 
-  const verifyGithubToken = useCallback(() => {
+  const verifyGithubToken = useCallback(
+    (token: string) => {
+      try {
+        const octokit = new Octokit({
+          auth: token,
+        });
+        setOctokit?.(octokit);
+        setValue(token);
+        setShow(false);
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    [setOctokit, setValue]
+  );
+
+  const submitForm = useCallback(() => {
     const { token } = getValues();
-    try {
-      const octokit = new Octokit({
-        auth: token,
-      });
-      setOctokit?.(octokit);
-      onHide?.();
-    } catch (error) {
-      console.error(error);
+    verifyGithubToken(token);
+  }, [getValues, verifyGithubToken]);
+
+  useEffect(() => {
+    const token = getValue();
+    console.log(token);
+    if (!token) {
+      setShow(true);
+    } else {
+      verifyGithubToken(token);
     }
-  }, [getValues, onHide, setOctokit]);
+  }, [getValue, verifyGithubToken]);
 
   return (
-    <Modal show={show} onHide={onHide} centered backdrop="static">
+    <Modal show={show} onHide={() => setShow(false)} centered backdrop="static">
       <Modal.Header className="p-2">
         <span className={styles.heading}>Verify Token</span>
       </Modal.Header>
@@ -49,7 +70,7 @@ export const ModalEnterToken = ({show, onHide, ...props}: ModalProps) => {
         </form>
       </Modal.Body>
       <Modal.Footer className="p-1">
-        <Button size="sm" onClick={verifyGithubToken}>
+        <Button size="sm" onClick={submitForm}>
           Verify Token
         </Button>
       </Modal.Footer>

@@ -39,46 +39,6 @@ export const PullRequestsSection = ({
     return pullRequests;
   }, []);
 
-  const getCommits = useCallback(async () => {
-    try {
-      gitPrGridRef.current?.api.showLoadingOverlay();
-      // detect url to params
-      const { url } = getValues();
-      const cells = url.split("/"); // ['https:', '', 'github.com', 'owner', 'repo', 'pull', 'pull number']
-      const res = await octokitRef?.current?.pulls.listCommits({
-        owner: cells[3],
-        repo: cells[4],
-        pull_number: Number(cells[6]),
-      });
-
-      const mergedCommits = (res?.data || []).filter((commit) =>
-        commit.commit.message.startsWith("Merge pull request")
-      );
-
-      // get pull request
-      const pullRequestsRes = await Promise.all(
-        mergedCommits.map((commit) =>
-          octokitRef?.current?.request(
-            "GET /repos/{owner}/{repo}/commits/{commit_sha}/pulls",
-            {
-              owner: cells[3],
-              repo: cells[4],
-              commit_sha: commit.sha,
-            }
-          )
-        )
-      );
-
-      const pullRequests = pullRequestsRes.map((res) => res?.data[0]);
-
-      gitPrGridRef.current?.api.setRowData(pullRequests);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      gitPrGridRef.current?.api.hideOverlay();
-    }
-  }, [getValues, octokitRef]);
-
   const generateMessage = useCallback(() => {
     if (!gitPrGridRef.current) return;
     // TODO: Define type for pull request and remove `any`
@@ -107,6 +67,49 @@ export const PullRequestsSection = ({
     onGenerateMessage(message.join("\n"), urls);
   }, [getGridData, onGenerateMessage]);
 
+  const getCommits = useCallback(async () => {
+    try {
+      gitPrGridRef.current?.api.showLoadingOverlay();
+      // detect url to params
+      const { url } = getValues();
+      const cells = url.split("/"); // ['https:', '', 'github.com', 'owner', 'repo', 'pull', 'pull number']
+      const res = await octokitRef?.current?.pulls.listCommits({
+        owner: cells[3],
+        repo: cells[4],
+        pull_number: Number(cells[6]),
+        per_page: 100
+      });
+
+      const mergedCommits = (res?.data || []).filter((commit) =>
+        commit.commit.message.startsWith("Merge pull request")
+      );
+
+      // get pull request
+      const pullRequestsRes = await Promise.all(
+        mergedCommits.map((commit) =>
+          octokitRef?.current?.request(
+            "GET /repos/{owner}/{repo}/commits/{commit_sha}/pulls",
+            {
+              owner: cells[3],
+              repo: cells[4],
+              commit_sha: commit.sha,
+            }
+          )
+        )
+      );
+
+      const pullRequests = pullRequestsRes.map((res) => res?.data[0]);
+
+      gitPrGridRef.current?.api.setRowData(pullRequests);
+      generateMessage();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      gitPrGridRef.current?.api.hideOverlay();
+    }
+  }, [generateMessage, getValues, octokitRef]);
+
+
   const openPullRequests = useCallback(() => {
     const pullRequests = getGridData();
     pullRequests.forEach(pr => {
@@ -134,14 +137,6 @@ export const PullRequestsSection = ({
           onClick={openPullRequests}
         >
           Open GitHub
-        </Button>
-        <Button
-          size="sm"
-          variant="outline-dark"
-          className="flex-shrink-0"
-          onClick={generateMessage}
-        >
-          Generate Message
         </Button>
       </div>
       <Card className="p-2 flex-fill">
