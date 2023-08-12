@@ -1,6 +1,8 @@
 import React, { useCallback, useState } from "react";
 import { ModalEnterToken, PullRequestsSection } from "./components";
 import { MessageCheckDev } from "./components";
+import styles from "./Home.module.css";
+import clsx from "clsx";
 
 const Home = () => {
   const [message, setMessage] = useState<string>("");
@@ -13,11 +15,9 @@ const Home = () => {
 
   return (
     <>
-      <main className="container-fluid py-3 d-flex gap-4 vh-100">
+      <main className={clsx("container-fluid py-3 d-flex gap-4 vh-100", styles.container)}>
         <PullRequestsSection onGenerateMessage={generateMessage} />
-        <div className="w-50">
-          <MessageCheckDev message={message} jiraUrls={jiraUrls} />
-        </div>
+        <MessageCheckDev message={message} jiraUrls={jiraUrls} />
       </main>
       <ModalEnterToken />
     </>

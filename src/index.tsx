@@ -1,5 +1,5 @@
 import React from "react";
-import "./assets/styles/main.module.css";
+import "./assets/styles/main.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import ReactDOM from "react-dom/client";
 import App from "./App";

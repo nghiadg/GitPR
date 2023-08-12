@@ -1,12 +1,13 @@
 import { ColDef } from "ag-grid-community";
+import { TPullRequests } from "./PullRequestsSection.types";
 
-export const gitPrColDefs: ColDef[] = [
+export const gitPrColDefs: ColDef<TPullRequests[number]>[] = [
   {
     headerName: "#",
     valueFormatter: (param) => {
         return String((param.node?.rowIndex ?? 0) + 1)
     },
-    width: 50
+    width: 60
   },
   {
     headerName: "Pull Request",
@@ -15,11 +16,13 @@ export const gitPrColDefs: ColDef[] = [
     tooltipField: 'html_url'
   },
   {
+    headerName: "Title",
+    field: "title",
+    minWidth: 300,
+  },
+  {
     headerName: "Assignee",
-    field: "assignee",
-    valueFormatter: (param) => {
-        return param.value.login
-    },
+    field: "assignee.login",
     sortable: true,
     sort: 'asc'
   },
