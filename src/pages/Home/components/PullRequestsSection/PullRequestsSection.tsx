@@ -90,7 +90,7 @@ export const PullRequestsSection = ({
           page,
         });
         
-        if (res?.data.length) hasMore = false;
+        if (!res?.data.length) hasMore = false;
         commits.push(...(res?.data || []));
         page++;
       } while (hasMore);
