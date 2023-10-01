@@ -21,8 +21,8 @@ export const gitPrColDefs: ColDef<TPullRequests[number]>[] = [
     minWidth: 300,
   },
   {
-    headerName: "Assignee",
-    field: "assignee.login",
+    headerName: "Author",
+    field: "user.login",
     sortable: true,
     sort: 'asc'
   },
